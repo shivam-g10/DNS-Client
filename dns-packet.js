@@ -74,6 +74,7 @@ class DNSPacket extends Packet
     }
     setDNSPacket(buffer){
         let res = buffer.toJSON().data;
+        this.packet = buffer;
         this.id = "0x"+utils.pad(res.shift().toString(16) + res.shift().toString(16) + "",4);
         console.log("ID: " + this.id);
         let flags = utils.pad(res.shift().toString(16) + res.shift().toString(16) + "",4);
@@ -142,7 +143,7 @@ class DNSPacket extends Packet
                 }
                 rdata = "0x" + rdata;
                 answer.setRData(rdata);
-                console.log(answer.getAsJSON(true));
+                console.log(answer.getAsJSON(true,this.packet));
                 this.answers.push(answer);
             }
             else {
@@ -170,13 +171,42 @@ class DNSPacket extends Packet
                 }
                 rdata = "0x" + rdata;
                 answer.setRData(rdata);
-                console.log(answer.getAsJSON(true));
+                console.log(answer.getAsJSON(true,this.packet));
                 this.ns.push(answer);
             }
             else {
                 //get name
             }
         }
+        for (let i = 0; i < intARCOUNT; i++) {
+            let answer = new Answer();
+            answer.setIsTc(this.TC);
+            if (this.TC) {
+                let offset = "0x" + utils.pad(""+ res.shift().toString(16) + res.shift().toString(16),4);
+                answer.setOffset(offset);
+                //console.log(offset);
+                let type = "0x" + utils.pad(""+ res.shift().toString(16) + res.shift().toString(16),4);
+                answer.setType(type);
+                answer.setClass("0x" + utils.pad(""+ res.shift().toString(16) + res.shift().toString(16),4))
+                answer.setTtl("0x" + utils.pad(""+ res.shift().toString(16) + res.shift().toString(16) + res.shift().toString(16) + res.shift().toString(16),8));
+                let rdlength = "0x" + utils.pad(""+ res.shift().toString(16) + res.shift().toString(16),4);
+                answer.setRDLength(rdlength);
+                let byteLength = parseInt(rdlength, 16);
+                let rdata = "";
+                while (byteLength > 0) {
+                    rdata += utils.pad(""+ res.shift().toString(16),2);
+                    byteLength--;
+                }
+                rdata = "0x" + rdata;
+                answer.setRData(rdata);
+                console.log(answer.getAsJSON(true,this.packet));
+                this.ar.push(answer);
+            }
+            else {
+                //get name
+            }
+        }
+        
         console.log(res.map(e => { return e.toString(16) }))
     }
 }

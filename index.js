@@ -6,7 +6,7 @@ const { Question } = require("./dns-question.js");
 const utils = require("./dns-utils.js");
 let dnsServers = dns.getServers();
 console.log(dnsServers);
-let domain = "shivammathur.in";
+let domain = "shivammathur.in.";
 if (dnsServers && dnsServers.length > 0) {
     for(let i=0;i<dnsServers.length;i++){
         let ip = dnsServers[i];
@@ -34,7 +34,11 @@ if (dnsServers && dnsServers.length > 0) {
             packet.setFlags("0x0100");
             let question = new Question();
             question.setName(domain);
-            question.setType("0x0001");
+            let type = "TXT";
+            let intType = utils.getTypeAsInt(type);
+            console.log(type,intType);
+            console.log("hexval: " + utils.pad(""+ intType.toString(16),4));
+            question.setType("0x"+utils.pad(""+ intType.toString(16),4));
             question.setClass("0x0001");
             packet.addQuestion(question);
             socket.send(packet.toBuffer(), 53, ip, (err, bytes) => {

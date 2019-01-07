@@ -71,35 +71,51 @@ DNSUtils.getIPAddressAnswer = (dataStr)=>{
     ip = ip.join(".");
     return ip;
 }
-DNSUtils.parseAnswer = (type,answer)=>{
-    
-    if(DNSUtils.parseInt(type)==1)
+DNSUtils.parseAnswer = (type,answer,packet)=>{
+    let intType = DNSUtils.parseInt(type);
+    if(intType==1)
     {
-        return DNSUtils.getIPAddressAnswer(answer);
+        return DNSUtils.getIPAddressAnswer(answer,packet);
     }
-    else if(DNSUtils.parseInt(type)==2)
+    else if(intType==2||intType==6||intType==5||intType==16)
     {
-        return DNSUtils.getNameFromValue(answer);
+        return DNSUtils.getNameFromValue(answer,packet);
+    }
+    else if(intType==15)
+    {
+        return DNSUtils.getMXAnswer(answer,packet);
+    }
+    else if(intType==17)
+    {
+        return DNSUtils.getRPAnswer(answer,packet);
+    }
+    else
+    {
+        return answer;
     }
 }
-DNSUtils.getNameFromBufferArray = (buffer)=>{
+DNSUtils.getNameFromBufferArray = (buffer,packet)=>{
     let flag = true;
     let url = "";
     while (flag) {
-        let count = parseInt(buffer.shift());
-        if (count == 0) {
+        let bufVal = buffer.shift();
+        let count = parseInt(bufVal);
+        if(count==192)
+        {
+            buffer = packet.toJSON().data.splice(buffer.shift());
+            count = parseInt(buffer.shift());
+        }
+        if (count == 0||!count) {
             flag = false;
             break;
         }
-        let part = "";
-        for (let j = 0; j < count; j++) {
-            part += String.fromCharCode(parseInt(buffer.shift()));
-        }
+        let part = DNSUtils.getCharString(buffer,count);
+        //console.log(part)
         url += part + ".";
     }
     return url;
 }
-DNSUtils.getNameFromValue = (dataStr)=>{
+DNSUtils.getNameFromValue = (dataStr,packet)=>{
     dataStr = dataStr.replace("0x","");
     let regex = new RegExp(`.{1,2}`, 'g');
     let dataArray = dataStr.match(regex);
@@ -107,6 +123,62 @@ DNSUtils.getNameFromValue = (dataStr)=>{
         return parseInt(e, 16);
     });
     let buf = Buffer.from(dataArray);
-    return DNSUtils.getNameFromBufferArray(buf.toJSON().data);
+    return DNSUtils.getNameFromBufferArray(buf.toJSON().data,packet);
+}
+DNSUtils.getTypeAsInt = (type)=>{
+    assert(typeof type == "string" && type != "");
+    let constants = fs.readFileSync(path.join(__dirname,"dns-constants.json"));
+    
+    constants = JSON.parse(constants); 
+    let index = constants.recordNames.indexOf(type);
+    if(index>-1)
+    {
+        return constants.recordIds[index];
+    }
+    else
+    {
+        return null;
+    }
+}
+DNSUtils.getMXAnswer = (dataStr,packet)=>{
+    dataStr = dataStr.replace("0x","");
+    let regex = new RegExp(`.{1,2}`, 'g');
+    let dataArray = dataStr.match(regex);
+    let hexDataArray = dataArray;
+    dataArray = dataArray.map(e => { 
+        return parseInt(e, 16);
+    });
+    let preference = parseInt(dataArray.shift() + "" + dataArray.shift() );
+    hexDataArray.shift();
+    hexDataArray.shift();
+    let mx =  DNSUtils.getNameFromValue("0x"+ hexDataArray.join(""),packet)
+    return { "preference" : preference, "mx" : mx};
+}
+DNSUtils.getRPAnswer = (dataStr,packet)=>{
+    dataStr = dataStr.replace("0x","");
+    let regex = new RegExp(`.{1,2}`, 'g');
+    let dataArray = dataStr.match(regex);
+    let hexDataArray = dataArray;
+    dataArray = dataArray.map(e => { 
+        return parseInt(e, 16);
+    });
+    
+    let preference = parseInt(dataArray.shift() );
+    hexDataArray.shift();
+   
+ //   console.log(preference)
+  //  console.log(dataArray)
+    let commandLength = dataArray.shift();
+    command = DNSUtils.getCharString(dataArray,commandLength);
+    let record =  DNSUtils.getCharString(dataArray,dataArray.length);
+    return { "preference" : preference, "command" : command,"record": record};
+}
+DNSUtils.getCharString = (data,length)=>
+{
+    let part = "";
+    for (let j = 0; j < length; j++) {
+        part += String.fromCharCode(parseInt(data.shift()));
+    }
+    return part;
 }
 module.exports = DNSUtils;

@@ -47,7 +47,7 @@ class Answer
         assert(typeof rData == "string" && (parseInt(rData) || parseInt(rData, 2) || parseInt(rData, 8) || parseInt(rData, 16)))
         this.rData = rData;
     }
-    getAsJSON(converted)
+    getAsJSON(converted,packet)
     {
         let json = {};
         if(converted)
@@ -60,7 +60,7 @@ class Answer
             json.class = utils.parseInt(this.class);
             json.timeToLive = utils.parseInt(this.timeToLive);
             json.rdLength = utils.parseInt(this.rdLength);
-            json.rData = utils.parseAnswer(this.type,this.rData);
+            json.rData = utils.parseAnswer(this.type,this.rData,packet);
         }
         else
         {
