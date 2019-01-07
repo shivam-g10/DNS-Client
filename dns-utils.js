@@ -77,9 +77,13 @@ DNSUtils.parseAnswer = (type,answer,packet)=>{
     {
         return DNSUtils.getIPAddressAnswer(answer,packet);
     }
-    else if(intType==2||intType==6||intType==5||intType==16)
+    else if(intType==2||intType==5||intType==16)
     {
         return DNSUtils.getNameFromValue(answer,packet);
+    }
+    else if(intType==6)
+    {
+        return DNSUtils.getSOAAnswer(answer,packet);
     }
     else if(intType==15)
     {
@@ -123,7 +127,9 @@ DNSUtils.getNameFromValue = (dataStr,packet)=>{
         return parseInt(e, 16);
     });
     let buf = Buffer.from(dataArray);
-    return DNSUtils.getNameFromBufferArray(buf.toJSON().data,packet);
+    let bufArray = buf.toJSON().data;
+    let result =DNSUtils.getNameFromBufferArray(bufArray,packet);
+    return result;
 }
 DNSUtils.getTypeAsInt = (type)=>{
     assert(typeof type == "string" && type != "");
@@ -151,7 +157,7 @@ DNSUtils.getMXAnswer = (dataStr,packet)=>{
     let preference = parseInt(dataArray.shift() + "" + dataArray.shift() );
     hexDataArray.shift();
     hexDataArray.shift();
-    let mx =  DNSUtils.getNameFromValue("0x"+ hexDataArray.join(""),packet)
+    let mx =  DNSUtils.getNameFromValue("0x"+ hexDataArray.join(""),packet);
     return { "preference" : preference, "mx" : mx};
 }
 DNSUtils.getRPAnswer = (dataStr,packet)=>{
@@ -180,5 +186,30 @@ DNSUtils.getCharString = (data,length)=>
         part += String.fromCharCode(parseInt(data.shift()));
     }
     return part;
+}
+DNSUtils.getSOAAnswer = (dataStr,packet)=>{
+    dataStr = dataStr.replace("0x","");
+    let regex = new RegExp(`.{1,2}`, 'g');
+    let dataArray = dataStr.match(regex);
+    let hexDataArray = dataArray;
+    dataArray = dataArray.map(e => { 
+        return parseInt(e, 16);
+    });
+    let nameServerArray = hexDataArray;
+    hexDataArray = nameServerArray.splice(hexDataArray.indexOf("00"));
+    hexDataArray.shift();
+    nameServerArray.push("00");
+    let nameServer = DNSUtils.getNameFromValue("0x"+ nameServerArray.join(""),packet);
+    let emailAddressArray = hexDataArray;
+    hexDataArray = emailAddressArray.splice(hexDataArray.indexOf("00"));
+    emailAddressArray.push("00");
+    hexDataArray.shift();
+    let emailAddress =   DNSUtils.getNameFromValue("0x"+ emailAddressArray.join(""),packet);
+    let sn = DNSUtils.parseInt("0x" + hexDataArray.shift() + hexDataArray.shift() + hexDataArray.shift() + hexDataArray.shift());
+    let refresh =  DNSUtils.parseInt("0x" + hexDataArray.shift() + hexDataArray.shift() + hexDataArray.shift() + hexDataArray.shift());
+    let retry =  DNSUtils.parseInt("0x" + hexDataArray.shift() + hexDataArray.shift() + hexDataArray.shift() + hexDataArray.shift());
+    let expiry =  DNSUtils.parseInt("0x" + hexDataArray.shift() + hexDataArray.shift() + hexDataArray.shift() + hexDataArray.shift());
+    let nx =  DNSUtils.parseInt("0x" + hexDataArray.shift() + hexDataArray.shift() + hexDataArray.shift() + hexDataArray.shift());
+    return { "nameServer" : nameServer, "emailAddress" : emailAddress,"sn": sn,"refresh":refresh,"retry":retry,"expiry":expiry,"nx":nx};
 }
 module.exports = DNSUtils;

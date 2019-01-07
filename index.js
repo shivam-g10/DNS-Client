@@ -34,7 +34,7 @@ if (dnsServers && dnsServers.length > 0) {
             packet.setFlags("0x0100");
             let question = new Question();
             question.setName(domain);
-            let type = "TXT";
+            let type = "SOA";
             let intType = utils.getTypeAsInt(type);
             console.log(type,intType);
             console.log("hexval: " + utils.pad(""+ intType.toString(16),4));
