@@ -1,0 +1,26 @@
+{
+  "name": "dns-client",
+  "version": "0.0.1",
+  "description": "DNS Client to resolve Zone file records",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "node ./test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BurnUalive/DNS-Client.git"
+  },
+  "keywords": [
+    "DNS",
+    "dns"
+  ],
+  "author": "Shivam Mathur",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/BurnUalive/DNS-Client/issues"
+  },
+  "homepage": "https://github.com/BurnUalive/DNS-Client#readme"
+}
