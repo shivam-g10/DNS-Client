@@ -1,6 +1,6 @@
 {
   "name": "dns-client",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "DNS Client to resolve Zone file records",
   "main": "index.js",
   "directories": {

@@ -13,6 +13,13 @@ client.setUpServers("1.1.1.1",_=>{
                     client.resolve("google.com","A");
                 })
             }
+            else if(round==1)
+            {
+                client.setUpServers("1.1.1.1",3053,_=>{
+                    console.log(client)
+                    client.resolve("google.com","A");
+                })
+            }
             round++;
         });
     });
